@@ -1,7 +1,5 @@
 # 🎢 AI-Driven Smart Pricing System for Theme Parks
 
-> **Deloitte Digital Camp 2026** | **Team B** | **Utkarsh Arya** | **SRM University**
-
 An intelligent pricing system that uses machine learning to recommend optimal ticket prices for a theme park based on weather, holidays, crowd data, and competitor prices — maximizing revenue while improving visitor experience.
 
 ---
@@ -16,13 +14,13 @@ An intelligent pricing system that uses machine learning to recommend optimal ti
 - [Dashboard Pages](#dashboard-pages)
 - [How It Works](#how-it-works)
 - [Model Performance](#model-performance)
-- [Screenshots](#screenshots)
+- [Screenshots & Outputs](#screenshots--outputs)
 
 ---
 
 ## 🎯 Overview
 
-Theme parks face the challenge of setting optimal ticket prices daily. Factors like weather, holidays, competition, and expected crowd levels all impact the ideal price point. This AI system automates pricing decisions using machine learning, trained on 2 years of realistic operational data.
+Theme parks face the challenge of setting optimal ticket prices daily. Factors like weather, holidays, competition, and expected crowd levels all impact the ideal price point. This AI system automates pricing decisions using machine learning, trained on 731 daily records from 2024-2025.
 
 ### Key Benefits:
 - 📈 **Revenue Maximization**: AI-optimized prices increase revenue by 15-25%
@@ -65,10 +63,10 @@ Theme parks face the challenge of setting optimal ticket prices daily. Factors l
 ## 📁 Project Structure
 
 ```
-TeamB_SmartPricing/
+smart-pricing-system/
 ├── data/
 │   ├── generate_data.py          # Synthetic data generator
-│   ├── theme_park_data.csv       # Generated dataset (2 years daily)
+│   ├── theme_park_data.csv       # Generated dataset (731 daily records)
 │   └── theme_park.db             # SQLite database
 ├── model/
 │   ├── train_model.py            # ML training pipeline
@@ -81,6 +79,7 @@ TeamB_SmartPricing/
 │   └── prediction_comparison.png # Actual vs Predicted chart
 ├── dashboard/
 │   └── app.py                    # Streamlit dashboard (5 pages)
+├── requirements.txt              # Python dependencies
 ├── main.py                       # Main setup script
 └── README.md                     # This file
 ```
@@ -91,12 +90,14 @@ TeamB_SmartPricing/
 
 ### Prerequisites
 ```bash
-pip install pandas numpy scikit-learn xgboost streamlit plotly matplotlib seaborn
+pip install -r requirements.txt
 ```
+
+The bundled model artifacts were trained with XGBoost, so `xgboost` is included in `requirements.txt` and is required when loading the saved dashboard model.
 
 ### Step 1: Generate Data & Train Model
 ```bash
-cd TeamB_SmartPricing
+cd smart-pricing-system
 python main.py
 ```
 
@@ -168,7 +169,7 @@ Input Data → Feature Engineering → ML Model → Price Recommendation
 ```
 
 ### Data Generation
-- 730 days (2 years: 2024-2025) of synthetic theme park data
+- 731 daily records covering 2024-01-01 to 2025-12-31, including the 2024 leap day
 - Realistic seasonal patterns, Indian holidays, weather distributions
 - Demand-driven visitor counts and pricing dynamics
 
@@ -193,6 +194,23 @@ Input Data → Feature Engineering → ML Model → Price Recommendation
 
 ---
 
+## 📸 Screenshots & Outputs
+
+The dashboard is generated live with Streamlit. The training pipeline also writes static model diagnostics:
+
+| Output | File |
+|--------|------|
+| Feature importance comparison | `model/feature_importance.png` |
+| Actual vs predicted prices | `model/prediction_comparison.png` |
+
+Run the dashboard with:
+
+```bash
+streamlit run dashboard/app.py
+```
+
+---
+
 ## 💡 Key Insights from the System
 
 1. **Weekends generate 40-60% more revenue** than weekdays
@@ -203,7 +221,7 @@ Input Data → Feature Engineering → ML Model → Price Recommendation
 
 ---
 
-## 🏆 Competition Highlights
+## 🏆 Deployment Highlights
 
 - ✅ 100% offline — no paid APIs
 - ✅ Complete ML pipeline with model comparison
@@ -216,24 +234,12 @@ Input Data → Feature Engineering → ML Model → Price Recommendation
 
 ---
 
-## 👨‍💻 Team
-
-| Role | Name | Institution |
-|------|------|-------------|
-| Developer & ML Engineer | **Utkarsh Arya** | SRM University |
-| Team | **Team B** | Deloitte Digital Camp 2026 |
-
----
-
 ## 📄 License
 
-This project was built for the **Deloitte Digital Camp 2026** competition.
-All rights reserved © 2026 Team B.
+This project is provided as a deployable smart-pricing dashboard and machine learning demo.
 
 ---
 
 <div align="center">
   <b>🎢 AI Smart Pricing System — Maximizing Revenue, Enhancing Experiences</b>
-  <br/>
-  <i>Built with ❤️ by Team B | Deloitte Digital Camp 2026</i>
 </div>

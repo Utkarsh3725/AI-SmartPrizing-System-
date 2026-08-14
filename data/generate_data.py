@@ -2,7 +2,6 @@
 ==============================================================================
 AI-Driven Smart Pricing System for Theme Parks
 Data Generation Module
-Team B | Utkarsh Arya | SRM University | Deloitte Digital Camp 2026
 ==============================================================================
 
 Generates 2 years of realistic daily theme park data with:
@@ -237,8 +236,7 @@ def generate_theme_park_data():
     """
     print("=" * 60)
     print("  AI Smart Pricing System - Data Generator")
-    print("  Team B | Utkarsh Arya | SRM University")
-    print("  Deloitte Digital Camp 2026")
+    print("  Theme Park Revenue Optimizer")
     print("=" * 60)
     print()
     

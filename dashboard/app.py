@@ -2,7 +2,6 @@
 ==============================================================================
 AI-Driven Smart Pricing System for Theme Parks
 Streamlit Dashboard
-Team B | Utkarsh Arya | SRM University | Deloitte Digital Camp 2026
 ==============================================================================
 """
 
@@ -236,8 +235,14 @@ def load_data():
 def load_model():
     """Load the trained pricing model."""
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'model', 'pricing_model.pkl')
-    with open(model_path, 'rb') as f:
-        model_package = pickle.load(f)
+    try:
+        with open(model_path, 'rb') as f:
+            model_package = pickle.load(f)
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            f"Missing Python package '{exc.name}' required to load the saved model. "
+            "Install dependencies with `pip install -r requirements.txt`."
+        ) from exc
     
     encoder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'model', 'weather_encoder.pkl')
     with open(encoder_path, 'rb') as f:
@@ -275,14 +280,13 @@ def render_sidebar():
         
         st.markdown("---")
         
-        # Team Badge
+        # Project badge
         st.markdown("""
         <div class="team-badge">
-            <h4>🏢 Deloitte Digital Camp 2026</h4>
+            <h4>🎢 Theme Park Revenue Optimizer</h4>
             <p>━━━━━━━━━━━━━━━</p>
-            <p><b style="color:#4ade80;">Team B</b></p>
-            <p>Utkarsh Arya</p>
-            <p>SRM University</p>
+            <p><b style="color:#4ade80;">AI Smart Pricing System</b></p>
+            <p>Production-ready pricing dashboard</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -303,7 +307,7 @@ def render_sidebar():
                 </div>
                 """, unsafe_allow_html=True)
         except Exception:
-            st.info("⚠️ Model not trained yet. Run `python main.py` first.")
+            st.info("⚠️ Model unavailable. Run `pip install -r requirements.txt`, then `python main.py`.")
         
         st.markdown("---")
         
@@ -564,7 +568,7 @@ def page_predictor(df):
         model = model_package['model']
         feature_columns = model_package['feature_columns']
     except Exception as e:
-        st.error(f"⚠️ Model not found. Please run `python main.py` first.\n\nError: {e}")
+        st.error(f"⚠️ Model could not be loaded. Run `pip install -r requirements.txt`, then `python main.py`.\n\nError: {e}")
         return
     
     # Input Form
@@ -1096,7 +1100,7 @@ def page_market_monitor(df):
         summary_text = f"""
 AI Smart Pricing System - Summary Report
 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}
-Team B | Utkarsh Arya | SRM University
+Theme Park Revenue Optimizer
 
 Total Records: {len(df)}
 Date Range: {df['date'].min().strftime('%Y-%m-%d')} to {df['date'].max().strftime('%Y-%m-%d')}
@@ -1390,7 +1394,7 @@ def main():
         df = load_data()
     except FileNotFoundError:
         st.error("❌ Data file not found! Please run `python main.py` first to generate data and train models.")
-        st.info("```\ncd TeamB_SmartPricing\npython main.py\n```")
+        st.info("```\ncd smart-pricing-system\npython main.py\n```")
         return
     
     # Sidebar navigation
@@ -1413,8 +1417,7 @@ def main():
     st.markdown("""
     <div style="text-align:center; color:#4a6b56; font-size:0.8rem; padding:20px;">
         <p>🎢 <b>AI Smart Pricing System</b> — Theme Park Revenue Optimizer v2.0</p>
-        <p>Built with ❤️ by <b>Team B</b> | Utkarsh Arya | SRM University</p>
-        <p>Deloitte Digital Camp 2026 | Powered by XGBoost + Streamlit</p>
+        <p>Powered by XGBoost + Streamlit</p>
     </div>
     """, unsafe_allow_html=True)
 

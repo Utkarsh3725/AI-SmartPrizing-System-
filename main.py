@@ -2,7 +2,6 @@
 ==============================================================================
 AI-Driven Smart Pricing System for Theme Parks
 Main Entry Point
-Team B | Utkarsh Arya | SRM University | Deloitte Digital Camp 2026
 ==============================================================================
 
 Usage:
@@ -24,8 +23,7 @@ def print_banner():
 ║     🎢  AI-DRIVEN SMART PRICING SYSTEM                      ║
 ║         FOR THEME PARKS                                      ║
 ║                                                              ║
-║     Deloitte Digital Camp 2026                               ║
-║     Team B | Utkarsh Arya | SRM University                   ║
+║     Theme Park Revenue Optimizer                             ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
     """
@@ -62,14 +60,11 @@ def check_dependencies():
         'pandas': 'pandas',
         'numpy': 'numpy',
         'sklearn': 'scikit-learn',
+        'xgboost': 'xgboost',
         'streamlit': 'streamlit',
         'plotly': 'plotly',
         'matplotlib': 'matplotlib',
         'seaborn': 'seaborn',
-    }
-    
-    optional = {
-        'xgboost': 'xgboost',
     }
     
     missing = []
@@ -81,16 +76,9 @@ def check_dependencies():
             print(f"   ❌ {package} — MISSING")
             missing.append(package)
     
-    for module, package in optional.items():
-        try:
-            __import__(module)
-            print(f"   ✅ {package}")
-        except ImportError:
-            print(f"   ⚠️  {package} — optional (will use sklearn fallback)")
-    
     if missing:
         print(f"\n❌ Missing required packages: {', '.join(missing)}")
-        print(f"   Install with: pip install {' '.join(missing)}")
+        print("   Install all dependencies with: pip install -r requirements.txt")
         
         user_input = input("\nWould you like to install them now? (y/n): ").strip().lower()
         if user_input == 'y':
@@ -147,8 +135,7 @@ def main():
 
 {'='*60}
   🎢 AI Smart Pricing System — Ready to optimize revenue!
-  Team B | Utkarsh Arya | SRM University
-  Deloitte Digital Camp 2026
+  Theme Park Revenue Optimizer
 {'='*60}
 """)
 

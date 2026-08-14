@@ -2,7 +2,6 @@
 ==============================================================================
 AI-Driven Smart Pricing System for Theme Parks
 Model Training Module
-Team B | Utkarsh Arya | SRM University | Deloitte Digital Camp 2026
 ==============================================================================
 
 Trains and compares XGBoost and Random Forest regression models
@@ -39,8 +38,7 @@ def load_and_prepare_data():
     """Load the dataset and prepare features for training."""
     print("=" * 60)
     print("  AI Smart Pricing System - Model Training")
-    print("  Team B | Utkarsh Arya | SRM University")
-    print("  Deloitte Digital Camp 2026")
+    print("  Theme Park Revenue Optimizer")
     print("=" * 60)
     print()
     
