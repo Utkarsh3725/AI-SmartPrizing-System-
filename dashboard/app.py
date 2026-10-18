@@ -13,6 +13,9 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pickle
 import os
+import json
+import urllib.error
+import urllib.request
 from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
@@ -33,6 +36,14 @@ st.markdown("""
     /* ===== GLOBAL DARK THEME ===== */
     .stApp {
         background: linear-gradient(135deg, #0a0f0d 0%, #101a14 50%, #0d1210 100%);
+    }
+
+    header[data-testid="stHeader"] {
+        background: #0a1410 !important;
+    }
+    header[data-testid="stHeader"] [data-testid="stToolbar"] {
+        background: transparent !important;
+        color: #b8e6cc !important;
     }
     
     /* Sidebar styling */
@@ -207,9 +218,65 @@ st.markdown("""
         border-color: #1a3a28 !important;
     }
 
+    /* Chat message contrast */
+    div[data-testid="stChatMessage"] {
+        background: #10251a !important;
+        border: 1px solid #1a3a28 !important;
+        border-radius: 10px !important;
+        padding: 12px 16px !important;
+    }
+    div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"],
+    div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p,
+    div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] li,
+    div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] strong {
+        color: #e0f2e9 !important;
+    }
+
     /* Chat input */
-    .stChatInput > div {
-        border-color: #2d5a3d !important;
+    div[data-testid="stBottom"],
+    div[data-testid="stBottomBlockContainer"] {
+        background: #0a1410 !important;
+    }
+    div[data-testid="stChatInput"] {
+        background: #10251a !important;
+        border: 1px solid #2d6b42 !important;
+        border-radius: 14px !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+    }
+    div[data-testid="stChatInput"]:focus-within {
+        border-color: #4ade80 !important;
+        box-shadow: 0 0 0 1px #4ade80 !important;
+    }
+    div[data-testid="stChatInput"] > div,
+    div[data-testid="stChatInput"] [data-baseweb="textarea"],
+    div[data-testid="stChatInput"] [data-baseweb="textarea"] > div,
+    div[data-testid="stChatInput"] [data-baseweb="base-input"],
+    div[data-testid="stChatInput"] textarea {
+        background: transparent !important;
+        background-color: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    div[data-testid="stChatInput"] [data-baseweb="textarea"]:focus-within {
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stChatInput"] textarea {
+        color: #e0f2e9 !important;
+        background: transparent !important;
+        -webkit-text-fill-color: #e0f2e9 !important;
+    }
+    div[data-testid="stChatInput"] textarea::placeholder {
+        color: #8fbfa3 !important;
+        -webkit-text-fill-color: #8fbfa3 !important;
+        opacity: 1;
+    }
+    div[data-testid="stChatInput"] button {
+        color: #4ade80 !important;
+        background: #1a4a30 !important;
+        border-radius: 10px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -311,88 +378,162 @@ def render_sidebar():
         
         st.markdown("---")
         
-        # Chatbot
-        st.markdown("### 💬 Ask AI Assistant")
-        render_chatbot()
-        
         return page
 
 
-def render_chatbot():
-    """Simple rule-based chatbot in sidebar."""
-    if 'chat_history' not in st.session_state:
-        st.session_state.chat_history = []
-    
-    # Display chat history
-    for msg in st.session_state.chat_history[-5:]:
-        if msg['role'] == 'user':
-            st.markdown(f"**You:** {msg['text']}")
-        else:
-            st.markdown(f"**🤖 AI:** {msg['text']}")
-    
-    user_input = st.chat_input("Ask about pricing...", key="sidebar_chat")
-    
-    if user_input:
-        st.session_state.chat_history.append({'role': 'user', 'text': user_input})
-        
-        response = get_chatbot_response(user_input)
-        st.session_state.chat_history.append({'role': 'bot', 'text': response})
-        st.rerun()
+def render_ask_ai(df):
+    """Render a data-aware AI chat for general and theme-park questions."""
+    st.markdown("## 💬 Ask AI")
+    st.caption("Ask a question about pricing, visitors, revenue, or anything else.")
 
+    if 'ask_ai_messages' not in st.session_state:
+        st.session_state.ask_ai_messages = []
 
-def get_chatbot_response(query):
-    """Generate responses for common pricing questions."""
-    query_lower = query.lower()
-    
+    if st.button("Clear chat", key="clear_ask_ai"):
+        st.session_state.ask_ai_messages = []
+
+    for message in st.session_state.ask_ai_messages:
+        with st.chat_message(message['role']):
+            st.markdown(message['content'])
+
+    prompt = st.chat_input("Ask AI anything...", key="dashboard_ask_ai")
+    if not prompt:
+        return
+
+    st.session_state.ask_ai_messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    def setting(name, default=None):
+        value = os.getenv(name)
+        if value:
+            return value
+        try:
+            return st.secrets.get(name, default)
+        except Exception:
+            return default
+
     try:
-        df = load_data()
-    except Exception:
-        return "Data not loaded yet. Please run `python main.py` first."
-    
-    if any(w in query_lower for w in ['sunday', 'weekend', 'saturday']):
-        weekend_data = df[df['is_weekend'] == 1]
-        avg_price = weekend_data['recommended_price'].mean()
-        avg_visitors = weekend_data['visitors'].mean()
-        return f"For weekends, the recommended price is ₹{avg_price:.0f} with an average of {avg_visitors:.0f} visitors."
-    
-    elif any(w in query_lower for w in ['holiday', 'diwali', 'holi', 'festival']):
-        holiday_data = df[df['is_holiday'] == 1]
-        avg_price = holiday_data['recommended_price'].mean()
-        return f"For holidays, the AI recommends ₹{avg_price:.0f}. Festival seasons see 40-60% more visitors!"
-    
-    elif any(w in query_lower for w in ['rain', 'rainy', 'monsoon']):
-        rainy = df[df['weather'] == 'rainy']
-        avg_price = rainy['recommended_price'].mean()
-        return f"On rainy days, recommend ₹{avg_price:.0f}. Consider offering a 'Rainy Day Special' discount package."
-    
-    elif any(w in query_lower for w in ['best price', 'optimal', 'recommend']):
-        avg_rec = df['recommended_price'].mean()
-        return f"The average optimal price is ₹{avg_rec:.0f}. Use the AI Predictor page to get specific recommendations."
-    
-    elif any(w in query_lower for w in ['revenue', 'earning', 'income']):
-        total_rev = df['revenue'].sum()
-        avg_rev = df['revenue'].mean()
-        return f"Total revenue: ₹{total_rev:,.0f}. Daily average: ₹{avg_rev:,.0f}."
-    
-    elif any(w in query_lower for w in ['visitor', 'crowd', 'people']):
-        avg_v = df['visitors'].mean()
-        max_v = df['visitors'].max()
-        return f"Average daily visitors: {avg_v:.0f}. Peak day: {max_v:,} visitors."
-    
-    elif any(w in query_lower for w in ['sunny', 'weather', 'hot', 'cold']):
-        sunny = df[df['weather'] == 'sunny']
-        avg_price = sunny['recommended_price'].mean()
-        return f"On sunny days, recommend ₹{avg_price:.0f}. Sunny days attract 15-25% more visitors."
-    
-    elif any(w in query_lower for w in ['competitor', 'competition']):
-        avg_comp = df['competitor_price'].mean()
-        return f"Competitor average: ₹{avg_comp:.0f}. Our AI keeps prices competitive while maximizing revenue."
-    
-    elif any(w in query_lower for w in ['help', 'what can you do', 'hi', 'hello']):
-        return "I can help with pricing strategy! Ask about weekends, holidays, weather effects, revenue, visitors, or competitor prices."
-    
-    else:
-        return "Try asking about: weekend/holiday pricing, weather effects, revenue stats, visitor patterns, or competitor analysis."
+        provider = setting("AI_PROVIDER", "openai").lower()
+        try:
+            model_package, _, model_results = load_model()
+        except (FileNotFoundError, OSError, pickle.PickleError, RuntimeError):
+            model_package, model_results = {}, None
+
+        weather_summary = df.groupby('weather').agg(
+            days=('weather', 'size'),
+            avg_visitors=('visitors', 'mean'),
+            avg_revenue=('revenue', 'mean'),
+            avg_recommended_price=('recommended_price', 'mean'),
+        ).round(1).to_dict(orient='index')
+        weekday_summary = df.groupby('day_of_week').agg(
+            avg_visitors=('visitors', 'mean'),
+            avg_revenue=('revenue', 'mean'),
+            avg_recommended_price=('recommended_price', 'mean'),
+        ).round(1).to_dict(orient='index')
+        monthly_summary = df.groupby(df['date'].dt.strftime('%Y-%m')).agg(
+            revenue=('revenue', 'sum'),
+            avg_visitors=('visitors', 'mean'),
+            avg_recommended_price=('recommended_price', 'mean'),
+        ).round(1).to_dict(orient='index')
+        top_revenue_days = df.nlargest(3, 'revenue')[
+            ['date', 'weather', 'is_holiday', 'visitors', 'current_price', 'revenue', 'recommended_price']
+        ].copy()
+        top_revenue_days['date'] = top_revenue_days['date'].dt.strftime('%Y-%m-%d')
+        top_revenue_days = top_revenue_days.to_dict(orient='records')
+        model_summary = "No saved model comparison metrics are available."
+        if model_results:
+            model_names = {
+                'xgboost': 'XGBoost',
+                'random_forest': 'Random Forest',
+                'linear_regression': 'Linear Regression',
+                'extra_trees': 'Extra Trees',
+            }
+            score_lines = [
+                f"{model_names.get(name, name.replace('_', ' ').title())}: "
+                f"holdout R2={metrics['r2']:.4f}, MAE=₹{metrics['mae']:.2f}, "
+                f"RMSE=₹{metrics['rmse']:.2f}, 5-fold CV R2={metrics['cv_mean']:.4f}"
+                for name, metrics in model_results.items()
+            ]
+            winner = model_package.get('winner')
+            model_summary = (
+                f"Saved model comparison (R2 is evaluated on the holdout split): {'; '.join(score_lines)}. "
+                f"Selected model: {model_names.get(winner, winner or 'unknown')} based on highest holdout R2."
+            )
+        data_context = (
+            f"Historical dataset: {len(df)} daily records from {df['date'].min().date()} to {df['date'].max().date()}. "
+            f"Total recorded revenue: ₹{df['revenue'].sum():,.0f}; average daily revenue: ₹{df['revenue'].mean():,.0f}; "
+            f"average visitors: {df['visitors'].mean():,.0f}; average current ticket price: ₹{df['current_price'].mean():,.0f}; "
+            f"average recommended price: ₹{df['recommended_price'].mean():,.0f}; average competitor price: ₹{df['competitor_price'].mean():,.0f}. "
+            f"Weather breakdown (days, average visitors, revenue, recommended price): {weather_summary}. "
+            f"Day-of-week breakdown (Monday=0 through Sunday=6; average visitors, revenue, recommended price): {weekday_summary}. "
+            f"Monthly breakdown (revenue, average visitors, recommended price): {monthly_summary}. "
+            f"Three highest-revenue recorded days (date, weather, holiday flag, visitors, current price, revenue, recommended price): {top_revenue_days}. "
+            f"Model performance: {model_summary} "
+            "The prediction target is recommended ticket price in rupees; model scores describe prediction fit, not a proven causal revenue increase. "
+            "This dataset is synthetic historical demo data, not live park or competitor data."
+        )
+        instructions = (
+            "You are the helpful AI assistant in a theme-park pricing dashboard. Answer general questions normally. "
+            "For questions about this project, its dataset, pricing, or models, use the supplied dashboard context as the source of truth; do not invent figures. "
+            "Clearly distinguish measured model prediction scores from claims about real-world revenue impact. "
+            "State when a conclusion is an estimate, never present synthetic historical data as live facts, and say when the context is insufficient. Keep responses clear and concise.\n\n"
+            f"Dashboard data context:\n{data_context}"
+        )
+        messages = st.session_state.ask_ai_messages[-12:]
+        if provider == "ollama":
+            base_url = setting("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+            payload = json.dumps({
+                "model": setting("OLLAMA_MODEL", "qwen2.5:7b-instruct"),
+                "messages": [{"role": "system", "content": instructions}, *messages],
+                "stream": False,
+            }).encode("utf-8")
+            request = urllib.request.Request(
+                f"{base_url}/api/chat",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=180) as result:
+                answer = json.loads(result.read().decode("utf-8"))["message"]["content"].strip()
+        elif provider == "openai":
+            api_key = setting("OPENAI_API_KEY")
+            if not api_key:
+                st.session_state.ask_ai_messages.pop()
+                st.error("Ask AI needs an OpenAI API key. Add OPENAI_API_KEY to Streamlit secrets, or set AI_PROVIDER=ollama for a local Ollama model.")
+                return
+            from openai import OpenAI
+
+            response = OpenAI(api_key=api_key).responses.create(
+                model=setting("OPENAI_MODEL", "gpt-6-astra"),
+                instructions=instructions,
+                input=messages,
+            )
+            answer = response.output_text.strip()
+        else:
+            st.session_state.ask_ai_messages.pop()
+            st.error("Unknown AI_PROVIDER. Choose 'openai' or 'ollama'.")
+            return
+        answer = answer or "I couldn't generate a response. Please try again."
+    except ImportError:
+        st.session_state.ask_ai_messages.pop()
+        st.error("The OpenAI package is missing. Install project dependencies and restart the app.")
+        return
+    except (urllib.error.URLError, TimeoutError, KeyError, json.JSONDecodeError) as exc:
+        st.session_state.ask_ai_messages.pop()
+        if setting("AI_PROVIDER", "openai").lower() == "ollama":
+            st.error(f"Couldn't reach Ollama at {setting('OLLAMA_BASE_URL', 'http://localhost:11434')}. Start Ollama and make sure the selected model is installed. Details: {exc}")
+        else:
+            st.error(f"AI request failed: {exc}")
+        return
+    except Exception as exc:
+        st.session_state.ask_ai_messages.pop()
+        st.error(f"AI request failed: {exc}")
+        return
+
+    st.session_state.ask_ai_messages.append({"role": "assistant", "content": answer})
+    with st.chat_message("assistant"):
+        st.markdown(answer)
 
 
 # ============================================================
@@ -479,7 +620,7 @@ def page_overview(df):
             yaxis_title='Revenue (₹)',
         )
         st.plotly_chart(fig, use_container_width=True)
-    
+
     with col_right:
         st.markdown("### 🌦️ Weather Distribution")
         weather_counts = df['weather'].value_counts()
@@ -500,7 +641,7 @@ def page_overview(df):
             showlegend=False,
         )
         st.plotly_chart(fig, use_container_width=True)
-    
+
     # Bottom row
     col_a, col_b = st.columns(2)
     
@@ -552,6 +693,9 @@ def page_overview(df):
             yaxis_title='Visitors',
         )
         st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("---")
+    render_ask_ai(df)
 
 
 # ============================================================
@@ -705,24 +849,26 @@ def page_predictor(df):
     st.markdown("### 🧪 Model Performance Metrics")
     
     if model_results:
-        perf_cols = st.columns(len(model_results))
-        for idx, (name, metrics) in enumerate(model_results.items()):
-            with perf_cols[idx]:
-                display_name = name.replace('_', ' ').title()
-                is_winner = name == model_package.get('winner', '')
-                badge = " 🏆" if is_winner else ""
-                
-                st.markdown(f"""
-                <div class="dashboard-card">
-                    <h4 style="color:#4ade80; text-align:center;">{display_name}{badge}</h4>
-                    <p style="color:#8fbfa3; text-align:center;">
-                        R² Score: <b style="color:#4ade80;">{metrics['r2']:.4f}</b><br/>
-                        MAE: <b style="color:#4ade80;">₹{metrics['mae']:.2f}</b><br/>
-                        RMSE: <b style="color:#4ade80;">₹{metrics['rmse']:.2f}</b><br/>
-                        CV Mean: <b style="color:#4ade80;">{metrics['cv_mean']:.4f}</b>
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
+        model_items = list(model_results.items())
+        for start in range(0, len(model_items), 2):
+            perf_cols = st.columns(2)
+            for column, (name, metrics) in zip(perf_cols, model_items[start:start + 2]):
+                with column:
+                    display_name = name.replace('_', ' ').title()
+                    is_winner = name == model_package.get('winner', '')
+                    badge = " 🏆" if is_winner else ""
+
+                    st.markdown(f"""
+                    <div class="dashboard-card">
+                        <h4 style="color:#4ade80; text-align:center;">{display_name}{badge}</h4>
+                        <p style="color:#8fbfa3; text-align:center;">
+                            R² Score: <b style="color:#4ade80;">{metrics['r2']:.4f}</b><br/>
+                            MAE: <b style="color:#4ade80;">₹{metrics['mae']:.2f}</b><br/>
+                            RMSE: <b style="color:#4ade80;">₹{metrics['rmse']:.2f}</b><br/>
+                            CV Mean: <b style="color:#4ade80;">{metrics['cv_mean']:.4f}</b>
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
 
 
 # ============================================================

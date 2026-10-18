@@ -51,7 +51,7 @@ Theme parks face the challenge of setting optimal ticket prices daily. Factors l
 | Component | Technology |
 |-----------|-----------|
 | Language | Python 3.8+ |
-| ML Models | XGBoost, Random Forest (scikit-learn) |
+| ML Models | XGBoost, Random Forest, Linear Regression, Extra Trees |
 | Dashboard | Streamlit |
 | Visualizations | Plotly (interactive charts) |
 | Data Processing | Pandas, NumPy |
@@ -73,6 +73,8 @@ smart-pricing-system/
 │   ├── pricing_model.pkl         # Best trained model (auto-selected)
 │   ├── xgboost_model.pkl         # XGBoost model
 │   ├── random_forest_model.pkl   # Random Forest model
+│   ├── linear_regression_model.pkl # Linear Regression baseline
+│   ├── extra_trees_model.pkl     # Extra Trees model
 │   ├── weather_encoder.pkl       # Label encoder for weather
 │   ├── model_results.pkl         # Performance metrics
 │   ├── feature_importance.png    # Feature importance visualization
@@ -107,6 +109,34 @@ streamlit run dashboard/app.py
 ```
 
 That's it! The dashboard will open in your browser at `http://localhost:8501`
+
+### Enable Ask AI
+
+The overview dashboard includes an AI chat assistant. For OpenAI, add an API key to the environment before launching:
+
+```bash
+export OPENAI_API_KEY="your-api-key"
+streamlit run dashboard/app.py
+```
+
+For Streamlit Community Cloud, add `OPENAI_API_KEY` under **App settings → Secrets**:
+
+```toml
+OPENAI_API_KEY = "your-api-key"
+```
+
+The optional `OPENAI_MODEL` environment variable selects the model; the default is `gpt-6-astra`.
+
+To use a free local Ollama model instead, install and start Ollama, then download Qwen 7B:
+
+```bash
+ollama pull qwen2.5:7b-instruct
+export AI_PROVIDER=ollama
+export OLLAMA_MODEL=qwen2.5:7b-instruct
+streamlit run dashboard/app.py
+```
+
+`OLLAMA_BASE_URL` defaults to `http://localhost:11434`. A Streamlit Cloud deployment cannot reach Ollama running on your own computer; use the OpenAI option there or configure an Ollama server reachable by the deployed app. The assistant can answer general questions and uses a summary of the dashboard's historical dataset for park-specific questions. The bundled dataset is synthetic demo data, not live park information.
 
 ---
 
@@ -176,7 +206,7 @@ Input Data → Feature Engineering → ML Model → Price Recommendation
 ### Machine Learning
 - **Features**: Day of week, weekend, holiday, weather (encoded), temperature, competitor price, visitors, month, quarter
 - **Target**: Optimal recommended price (₹800 - ₹1500)
-- **Models**: XGBoost Regressor + Random Forest Regressor
+- **Models**: XGBoost Regressor, Random Forest, Linear Regression baseline, and Extra Trees Regressor
 - **Selection**: Automatic comparison — best R² score wins
 - **Validation**: 5-fold cross-validation
 
