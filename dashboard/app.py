@@ -505,7 +505,7 @@ def render_ask_ai(df):
             from openai import OpenAI
 
             response = OpenAI(api_key=api_key).responses.create(
-                model=setting("OPENAI_MODEL", "gpt-6-astra"),
+                model=setting("OPENAI_MODEL", "gpt-4o-mini"),
                 instructions=instructions,
                 input=messages,
             )

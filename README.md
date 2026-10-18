@@ -125,7 +125,7 @@ For Streamlit Community Cloud, add `OPENAI_API_KEY` under **App settings → Sec
 OPENAI_API_KEY = "your-api-key"
 ```
 
-The optional `OPENAI_MODEL` environment variable selects the model; the default is `gpt-6-astra`.
+The optional `OPENAI_MODEL` environment variable selects the model; the default is `gpt-4o-mini`.
 
 To use a free local Ollama model instead, install and start Ollama, then download Qwen 7B:
 
