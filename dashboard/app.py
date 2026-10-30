@@ -543,6 +543,16 @@ def render_ask_ai(df):
         st.session_state.ask_ai_messages.pop()
         st.error("The OpenAI package is missing. Install project dependencies and restart the app.")
         return
+    except urllib.error.HTTPError as exc:
+        st.session_state.ask_ai_messages.pop()
+        response_body = exc.read().decode("utf-8", errors="replace")
+        try:
+            error_payload = json.loads(response_body)
+            detail = error_payload.get("error", {}).get("message", response_body)
+        except (json.JSONDecodeError, AttributeError):
+            detail = response_body or str(exc.reason)
+        st.error(f"AI provider returned HTTP {exc.code}: {detail}")
+        return
     except (urllib.error.URLError, TimeoutError, KeyError, json.JSONDecodeError) as exc:
         st.session_state.ask_ai_messages.pop()
         if setting("AI_PROVIDER", "openrouter").lower() == "ollama":
