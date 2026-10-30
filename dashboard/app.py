@@ -414,7 +414,7 @@ def render_ask_ai(df):
             return default
 
     try:
-        provider = setting("AI_PROVIDER", "openai").lower()
+        provider = setting("AI_PROVIDER", "openrouter").lower()
         try:
             model_package, _, model_results = load_model()
         except (FileNotFoundError, OSError, pickle.PickleError, RuntimeError):
@@ -496,11 +496,35 @@ def render_ask_ai(df):
             )
             with urllib.request.urlopen(request, timeout=180) as result:
                 answer = json.loads(result.read().decode("utf-8"))["message"]["content"].strip()
+        elif provider == "openrouter":
+            api_key = setting("OPENROUTER_API_KEY")
+            if not api_key:
+                st.session_state.ask_ai_messages.pop()
+                st.error("Ask AI needs an OpenRouter API key. Add OPENROUTER_API_KEY to Streamlit secrets and set AI_PROVIDER to openrouter.")
+                return
+            payload = json.dumps({
+                "model": setting("OPENROUTER_MODEL", "qwen/qwen3.8-27b:free"),
+                "messages": [{"role": "system", "content": instructions}, *messages],
+                "stream": False,
+            }).encode("utf-8")
+            request = urllib.request.Request(
+                f"{setting('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1').rstrip('/')}/chat/completions",
+                data=payload,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://riderrevenue.streamlit.app",
+                    "X-Title": "Theme Park Revenue Optimizer",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=180) as result:
+                answer = json.loads(result.read().decode("utf-8"))["choices"][0]["message"]["content"].strip()
         elif provider == "openai":
             api_key = setting("OPENAI_API_KEY")
             if not api_key:
                 st.session_state.ask_ai_messages.pop()
-                st.error("Ask AI needs an OpenAI API key. Add OPENAI_API_KEY to Streamlit secrets, or set AI_PROVIDER=ollama for a local Ollama model.")
+                st.error("Ask AI needs an OpenAI API key. Add OPENAI_API_KEY to Streamlit secrets, or set AI_PROVIDER to openrouter or ollama.")
                 return
             from openai import OpenAI
 
@@ -512,7 +536,7 @@ def render_ask_ai(df):
             answer = response.output_text.strip()
         else:
             st.session_state.ask_ai_messages.pop()
-            st.error("Unknown AI_PROVIDER. Choose 'openai' or 'ollama'.")
+            st.error("Unknown AI_PROVIDER. Choose 'openrouter', 'openai', or 'ollama'.")
             return
         answer = answer or "I couldn't generate a response. Please try again."
     except ImportError:
@@ -521,8 +545,10 @@ def render_ask_ai(df):
         return
     except (urllib.error.URLError, TimeoutError, KeyError, json.JSONDecodeError) as exc:
         st.session_state.ask_ai_messages.pop()
-        if setting("AI_PROVIDER", "openai").lower() == "ollama":
+        if setting("AI_PROVIDER", "openrouter").lower() == "ollama":
             st.error(f"Couldn't reach Ollama at {setting('OLLAMA_BASE_URL', 'http://localhost:11434')}. Start Ollama and make sure the selected model is installed. Details: {exc}")
+        elif setting("AI_PROVIDER", "openrouter").lower() == "openrouter":
+            st.error(f"Couldn't reach OpenRouter. Check its service and your model settings. Details: {exc}")
         else:
             st.error(f"AI request failed: {exc}")
         return

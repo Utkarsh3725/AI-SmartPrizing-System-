@@ -112,22 +112,17 @@ That's it! The dashboard will open in your browser at `http://localhost:8501`
 
 ### Enable Ask AI
 
-The overview dashboard includes an AI chat assistant. For OpenAI, add an API key to the environment before launching:
-
-```bash
-export OPENAI_API_KEY="your-api-key"
-streamlit run dashboard/app.py
-```
-
-For Streamlit Community Cloud, add `OPENAI_API_KEY` under **App settings → Secrets**:
+The dashboard defaults to Qwen through OpenRouter's free-model API. Create an OpenRouter API key and add these values under **App settings → Secrets** in Streamlit Community Cloud. The free model is rate-limited and its availability can change; do not add credits if you want to keep usage at $0.
 
 ```toml
-OPENAI_API_KEY = "your-api-key"
+AI_PROVIDER = "openrouter"
+OPENROUTER_API_KEY = "your-openrouter-api-key"
+OPENROUTER_MODEL = "qwen/qwen3.8-27b:free"
 ```
 
-The optional `OPENAI_MODEL` environment variable selects the model; the default is `gpt-4o-mini`.
+The model and base URL can also be set with `OPENROUTER_MODEL` and `OPENROUTER_BASE_URL` environment variables. The default model is `qwen/qwen3.8-27b:free` and the default base URL is `https://openrouter.ai/api/v1`.
 
-To use a free local Ollama model instead, install and start Ollama, then download Qwen 7B:
+To use your local Ollama model instead, install and start Ollama, then download Qwen:
 
 ```bash
 ollama pull qwen2.5:7b-instruct
@@ -136,7 +131,7 @@ export OLLAMA_MODEL=qwen2.5:7b-instruct
 streamlit run dashboard/app.py
 ```
 
-`OLLAMA_BASE_URL` defaults to `http://localhost:11434`. A Streamlit Cloud deployment cannot reach Ollama running on your own computer; use the OpenAI option there or configure an Ollama server reachable by the deployed app. The assistant can answer general questions and uses a summary of the dashboard's historical dataset for park-specific questions. The bundled dataset is synthetic demo data, not live park information.
+`OLLAMA_BASE_URL` defaults to `http://localhost:11434`. Local Ollama requests do not incur API charges but require your computer to be running the model. A hosted Streamlit app cannot reach Ollama running on your computer, so use the OpenRouter option for the cloud chatbot. The assistant can answer general questions and uses a summary of the dashboard's historical dataset for park-specific questions. The bundled dataset is synthetic demo data, not live park information.
 
 ---
 
