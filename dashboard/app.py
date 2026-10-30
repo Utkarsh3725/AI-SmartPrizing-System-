@@ -503,7 +503,7 @@ def render_ask_ai(df):
                 st.error("Ask AI needs an OpenRouter API key. Add OPENROUTER_API_KEY to Streamlit secrets and set AI_PROVIDER to openrouter.")
                 return
             payload = json.dumps({
-                "model": setting("OPENROUTER_MODEL", "qwen/qwen3.8-27b:free"),
+                "model": setting("OPENROUTER_MODEL", "openrouter/free"),
                 "messages": [{"role": "system", "content": instructions}, *messages],
                 "stream": False,
             }).encode("utf-8")

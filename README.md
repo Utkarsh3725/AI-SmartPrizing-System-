@@ -112,15 +112,15 @@ That's it! The dashboard will open in your browser at `http://localhost:8501`
 
 ### Enable Ask AI
 
-The dashboard defaults to Qwen through OpenRouter's free-model API. Create an OpenRouter API key and add these values under **App settings → Secrets** in Streamlit Community Cloud. The free model is rate-limited and its availability can change; do not add credits if you want to keep usage at $0.
+The dashboard defaults to OpenRouter's free-only model router, which selects an available free model for each request. It may choose a model other than Qwen. Create an OpenRouter API key and add these values under **App settings → Secrets** in Streamlit Community Cloud. Free models are rate-limited and availability can change; do not add credits if you want to keep usage at $0.
 
 ```toml
 AI_PROVIDER = "openrouter"
 OPENROUTER_API_KEY = "your-openrouter-api-key"
-OPENROUTER_MODEL = "qwen/qwen3.8-27b:free"
+OPENROUTER_MODEL = "openrouter/free"
 ```
 
-The model and base URL can also be set with `OPENROUTER_MODEL` and `OPENROUTER_BASE_URL` environment variables. The default model is `qwen/qwen3.8-27b:free` and the default base URL is `https://openrouter.ai/api/v1`.
+The model and base URL can also be set with `OPENROUTER_MODEL` and `OPENROUTER_BASE_URL` environment variables. The default model is `openrouter/free` and the default base URL is `https://openrouter.ai/api/v1`.
 
 To use your local Ollama model instead, install and start Ollama, then download Qwen:
 
